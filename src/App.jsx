@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import AOS from "aos";
 
 // ─────────────────────────────────────────
 //  CONFIG
@@ -187,9 +188,9 @@ function OrderModal({ produit, onClose }) {
   });
 
   return (
-    <div onClick={e => e.target === e.currentTarget && onClose()}
+    <div onClick={e => e.target === e.currentTarget && onClose()} className="modal-backdrop"
       style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
-      <div style={{ background: C.bgCard, border: `1px solid ${C.border}`, borderRadius: 22, padding: "2rem", maxWidth: 460, width: "100%", maxHeight: "92vh", overflowY: "auto" }}>
+      <div className="modal-pop" style={{ background: C.bgCard, border: `1px solid ${C.border}`, borderRadius: 22, padding: "2rem", maxWidth: 460, width: "100%", maxHeight: "92vh", overflowY: "auto" }}>
 
         {/* Header */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
@@ -324,10 +325,12 @@ function OrderModal({ produit, onClose }) {
 // ─────────────────────────────────────────
 //  CARTE PRODUIT
 // ─────────────────────────────────────────
-function ProductCard({ produit, onOrder }) {
+function ProductCard({ produit, onOrder, index = 0 }) {
   const [hovered, setHovered] = useState(false);
   return (
     <div
+      data-aos="fade-up"
+      data-aos-delay={Math.min(index, 4) * 90}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -381,12 +384,12 @@ function ProductCard({ produit, onOrder }) {
               <span style={{ color: C.muted, fontSize: "0.72rem", marginLeft: 4 }}>• PDF immédiat</span>
             )}
           </div>
-          <button onClick={() => onOrder(produit)}
+          <button onClick={() => onOrder(produit)} className="lift-hover"
             style={{
               width: "100%", background: produit.gradient, color: C.white,
               border: "none", borderRadius: 12, padding: "0.85rem",
               fontWeight: 800, cursor: "pointer", fontSize: "0.9rem",
-              transition: "opacity .15s",
+              transition: "opacity .15s, transform .2s, box-shadow .2s",
             }}
             onMouseEnter={e => e.currentTarget.style.opacity = "0.85"}
             onMouseLeave={e => e.currentTarget.style.opacity = "1"}>
@@ -448,7 +451,7 @@ function CookieBanner() {
   if (!visible) return null;
 
   return (
-    <div style={{
+    <div className="cookie-slide-in" style={{
       position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 300,
       background: C.bgCard, borderTop: `1px solid ${C.border}`,
       padding: "1.1rem 1.5rem", display: "flex", gap: 16,
@@ -477,6 +480,21 @@ function CookieBanner() {
 export default function App() {
   const [orderProduit, setOrderProduit] = useState(null);
   const [activeTab, setActiveTab]       = useState("tous");
+  const [scrolled, setScrolled]         = useState(false);
+
+  useEffect(() => {
+    AOS.init({ duration: 700, easing: "ease-out-cubic", once: true, offset: 60 });
+  }, []);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 12);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    AOS.refresh();
+  }, [activeTab]);
 
   const tabs = [
     { id: "tous",      label: "Tout voir" },
@@ -500,9 +518,11 @@ export default function App() {
         display: "flex", alignItems: "center", justifyContent: "space-between",
         position: "sticky", top: 0, zIndex: 50,
         background: "rgba(13,0,32,0.95)", backdropFilter: "blur(12px)",
+        boxShadow: scrolled ? "0 8px 24px rgba(0,0,0,0.35)" : "none",
+        transition: "box-shadow .25s ease",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ background: "rgba(255,255,255,0.08)", border: `1px solid ${C.border}`, borderRadius: 9, padding: "4px 10px", fontFamily: "monospace", fontWeight: 800, color: C.yellow, fontSize: "1rem" }}>
+          <div className="logo-pulse" style={{ background: "rgba(255,255,255,0.08)", border: `1px solid ${C.border}`, borderRadius: 9, padding: "4px 10px", fontFamily: "monospace", fontWeight: 800, color: C.yellow, fontSize: "1rem" }}>
             &lt;/&gt;
           </div>
           <div>
@@ -519,14 +539,14 @@ export default function App() {
       {/* ── HERO ── */}
       <div style={{ background: gradHero, padding: "5rem 1.5rem 4rem", textAlign: "center", position: "relative", overflow: "hidden" }}>
         {/* Déco glows */}
-        <div style={{ position: "absolute", top: "10%", left: "10%", width: 300, height: 300, background: "radial-gradient(circle, rgba(70,0,140,0.25) 0%, transparent 70%)", pointerEvents: "none" }} />
-        <div style={{ position: "absolute", bottom: "10%", right: "10%", width: 250, height: 250, background: "radial-gradient(circle, rgba(204,0,102,0.2) 0%, transparent 70%)", pointerEvents: "none" }} />
+        <div className="glow-float" style={{ position: "absolute", top: "10%", left: "10%", width: 300, height: 300, background: "radial-gradient(circle, rgba(70,0,140,0.25) 0%, transparent 70%)", pointerEvents: "none" }} />
+        <div className="glow-float-alt" style={{ position: "absolute", bottom: "10%", right: "10%", width: 250, height: 250, background: "radial-gradient(circle, rgba(204,0,102,0.2) 0%, transparent 70%)", pointerEvents: "none" }} />
 
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,215,0,0.08)", border: "1px solid rgba(255,215,0,0.2)", color: C.yellow, borderRadius: 20, padding: "0.3rem 1rem", fontSize: "0.72rem", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 24 }}>
+        <div data-aos="fade-down" data-aos-delay="0" style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,215,0,0.08)", border: "1px solid rgba(255,215,0,0.2)", color: C.yellow, borderRadius: 20, padding: "0.3rem 1rem", fontSize: "0.72rem", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 24 }}>
           ✦ Formations & Guides IA · Conakry 2026
         </div>
 
-        <h1 style={{ fontSize: "clamp(2.2rem, 6vw, 3.6rem)", fontWeight: 900, lineHeight: 1.1, marginBottom: 18, fontFamily: "'Space Grotesk', sans-serif" }}>
+        <h1 data-aos="fade-up" data-aos-delay="100" style={{ fontSize: "clamp(2.2rem, 6vw, 3.6rem)", fontWeight: 900, lineHeight: 1.1, marginBottom: 18, fontFamily: "'Space Grotesk', sans-serif" }}>
           Apprends à coder.<br />
           <span style={{ background: "linear-gradient(135deg, #FFD700, #FF6B00)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
             Maîtrise l'IA.
@@ -536,13 +556,13 @@ export default function App() {
           </span>
         </h1>
 
-        <p style={{ color: C.muted, fontSize: "1rem", lineHeight: 1.75, maxWidth: 540, margin: "0 auto 2.5rem" }}>
+        <p data-aos="fade-up" data-aos-delay="200" style={{ color: C.muted, fontSize: "1rem", lineHeight: 1.75, maxWidth: 540, margin: "0 auto 2.5rem" }}>
           Des formations et guides pratiques créés à Conakry pour la jeunesse africaine —
           pour ceux qui veulent vraiment comprendre, créer et avancer.
         </p>
 
         {/* Stats */}
-        <div style={{ display: "flex", gap: 40, justifyContent: "center", flexWrap: "wrap", marginBottom: 32 }}>
+        <div data-aos="fade-up" data-aos-delay="300" style={{ display: "flex", gap: 40, justifyContent: "center", flexWrap: "wrap", marginBottom: 32 }}>
           {[["3", "Guides PDF"], ["1", "Formation présentielle"], ["500+", "Étudiants formés"]].map(([v, l]) => (
             <div key={l} style={{ textAlign: "center" }}>
               <div style={{ fontWeight: 900, fontSize: "1.8rem", fontFamily: "'Space Grotesk', sans-serif", color: C.white }}>{v}</div>
@@ -551,12 +571,12 @@ export default function App() {
           ))}
         </div>
 
-        <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-          <a href="#produits"
+        <div data-aos="fade-up" data-aos-delay="400" style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+          <a href="#produits" className="lift-hover"
             style={{ background: gradMain, color: C.white, borderRadius: 14, padding: "0.9rem 2rem", fontWeight: 800, textDecoration: "none", fontSize: "0.95rem" }}>
             Voir les formations →
           </a>
-          <a href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noreferrer"
+          <a href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noreferrer" className="lift-hover"
             style={{ background: "rgba(255,255,255,0.07)", color: C.text, border: `1px solid ${C.border}`, borderRadius: 14, padding: "0.9rem 2rem", fontWeight: 700, textDecoration: "none", fontSize: "0.95rem" }}>
             Nous contacter
           </a>
@@ -565,15 +585,15 @@ export default function App() {
 
       {/* ── PRODUITS ── */}
       <div id="produits" style={{ maxWidth: 1100, margin: "0 auto", padding: "4rem 1.5rem" }}>
-        <h2 style={{ textAlign: "center", fontWeight: 800, fontSize: "1.5rem", marginBottom: 8, fontFamily: "'Space Grotesk', sans-serif" }}>
+        <h2 data-aos="fade-up" style={{ textAlign: "center", fontWeight: 800, fontSize: "1.5rem", marginBottom: 8, fontFamily: "'Space Grotesk', sans-serif" }}>
           Nos formations & guides
         </h2>
-        <p style={{ textAlign: "center", color: C.muted, marginBottom: 28, fontSize: "0.9rem" }}>
+        <p data-aos="fade-up" data-aos-delay="80" style={{ textAlign: "center", color: C.muted, marginBottom: 28, fontSize: "0.9rem" }}>
           Guides PDF · Paiement Orange Money · Livraison par WhatsApp
         </p>
 
         {/* Tabs */}
-        <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 36 }}>
+        <div data-aos="fade-up" data-aos-delay="140" style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 36 }}>
           {tabs.map(t => (
             <button key={t.id} onClick={() => setActiveTab(t.id)}
               style={{
@@ -591,13 +611,13 @@ export default function App() {
 
         {/* Grille */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(290px, 1fr))", gap: 20 }}>
-          {filtered.map(p => (
-            <ProductCard key={p.id} produit={p} onOrder={setOrderProduit} />
+          {filtered.map((p, i) => (
+            <ProductCard key={p.id} produit={p} onOrder={setOrderProduit} index={i} />
           ))}
         </div>
 
         {/* ── PACK COMPLET ── */}
-        <div style={{ marginTop: 40, background: "linear-gradient(135deg, rgba(70,0,140,0.35), rgba(204,0,102,0.35))", border: "1px solid rgba(124,58,237,0.35)", borderRadius: 22, padding: "2.2rem", textAlign: "center" }}>
+        <div data-aos="zoom-in" style={{ marginTop: 40, background: "linear-gradient(135deg, rgba(70,0,140,0.35), rgba(204,0,102,0.35))", border: "1px solid rgba(124,58,237,0.35)", borderRadius: 22, padding: "2.2rem", textAlign: "center" }}>
           <Tag color={C.yellow} bg="#2D2000">🔥 OFFRE SPÉCIALE</Tag>
           <h3 style={{ fontWeight: 900, fontSize: "1.4rem", margin: "12px 0 6px", fontFamily: "'Space Grotesk', sans-serif" }}>
             Pack Complet — Tout JeCode
@@ -629,10 +649,10 @@ export default function App() {
 
       {/* ── POURQUOI JECODE ── */}
       <div style={{ maxWidth: 900, margin: "0 auto", padding: "0 1.5rem 4rem", textAlign: "center" }}>
-        <h2 style={{ fontWeight: 800, fontSize: "1.4rem", marginBottom: 8, fontFamily: "'Space Grotesk', sans-serif" }}>
+        <h2 data-aos="fade-up" style={{ fontWeight: 800, fontSize: "1.4rem", marginBottom: 8, fontFamily: "'Space Grotesk', sans-serif" }}>
           Pourquoi JeCode ?
         </h2>
-        <p style={{ color: C.muted, marginBottom: 36, fontSize: "0.9rem" }}>
+        <p data-aos="fade-up" data-aos-delay="80" style={{ color: C.muted, marginBottom: 36, fontSize: "0.9rem" }}>
           Créé à Conakry, pour la jeunesse guinéenne et africaine.
         </p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
@@ -641,8 +661,8 @@ export default function App() {
             ["🇬🇳", "Fait en Guinée", "Créé par quelqu'un qui comprend le contexte africain et ses réalités."],
             ["⚡", "Résultats rapides", "Tu peux appliquer ce que tu apprends le jour même de l'achat."],
             ["💬", "Support WhatsApp", "Des questions après l'achat ? On répond. Tu n'es pas seul."],
-          ].map(([e, t, d]) => (
-            <div key={t} style={{ background: C.bgCard, border: `1px solid ${C.border}`, borderRadius: 16, padding: "1.4rem", textAlign: "left" }}>
+          ].map(([e, t, d], i) => (
+            <div key={t} data-aos="fade-up" data-aos-delay={i * 90} style={{ background: C.bgCard, border: `1px solid ${C.border}`, borderRadius: 16, padding: "1.4rem", textAlign: "left" }}>
               <div style={{ fontSize: 28, marginBottom: 10 }}>{e}</div>
               <div style={{ fontWeight: 700, fontSize: "0.9rem", color: C.white, marginBottom: 6 }}>{t}</div>
               <div style={{ color: C.muted, fontSize: "0.82rem", lineHeight: 1.6 }}>{d}</div>
@@ -655,7 +675,7 @@ export default function App() {
 
       {/* ── FAQ ── */}
       <div style={{ maxWidth: 640, margin: "0 auto", padding: "0 1.5rem 4rem" }}>
-        <h2 style={{ textAlign: "center", fontWeight: 800, fontSize: "1.3rem", marginBottom: 28, fontFamily: "'Space Grotesk', sans-serif" }}>
+        <h2 data-aos="fade-up" style={{ textAlign: "center", fontWeight: 800, fontSize: "1.3rem", marginBottom: 28, fontFamily: "'Space Grotesk', sans-serif" }}>
           Questions fréquentes
         </h2>
         {[
@@ -665,7 +685,7 @@ export default function App() {
           ["Est-ce que je peux partager les guides ?", "Non. Chaque guide est pour usage personnel uniquement. La revente est interdite."],
           ["J'ai une question avant d'acheter ?", "Écris-nous sur WhatsApp — on répond rapidement."],
         ].map(([q, a], i) => (
-          <div key={i} style={{ borderBottom: `1px solid ${C.border}`, padding: "1.2rem 0" }}>
+          <div key={i} data-aos="fade-up" data-aos-delay={Math.min(i, 4) * 60} style={{ borderBottom: `1px solid ${C.border}`, padding: "1.2rem 0" }}>
             <div style={{ fontWeight: 700, color: C.text, marginBottom: 6, fontSize: "0.92rem" }}>{q}</div>
             <div style={{ color: C.muted, fontSize: "0.85rem", lineHeight: 1.65 }}>{a}</div>
           </div>
@@ -673,7 +693,7 @@ export default function App() {
       </div>
 
       {/* ── FOOTER ── */}
-      <div style={{ borderTop: `1px solid ${C.border}`, padding: "2.5rem 1.5rem" }}>
+      <div data-aos="fade" style={{ borderTop: `1px solid ${C.border}`, padding: "2.5rem 1.5rem" }}>
         <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", flexWrap: "wrap", gap: 20, justifyContent: "space-between", alignItems: "center" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ background: "rgba(255,255,255,0.08)", border: `1px solid ${C.border}`, borderRadius: 9, padding: "4px 10px", fontFamily: "monospace", fontWeight: 800, color: C.yellow, fontSize: "1rem" }}>

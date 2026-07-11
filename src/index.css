@@ -2,3 +2,59 @@
 body { font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
 input, select, textarea, button { font-family: inherit; }
 html { scroll-behavior: smooth; }
+
+/* ── Halos décoratifs qui flottent doucement en fond de hero ── */
+@keyframes floatGlow {
+  0%, 100% { transform: translate(0, 0); }
+  50%      { transform: translate(-14px, 18px); }
+}
+.glow-float {
+  animation: floatGlow 9s ease-in-out infinite;
+}
+.glow-float-alt {
+  animation: floatGlow 11s ease-in-out infinite reverse;
+}
+
+/* ── Boutons / liens : léger soulèvement au survol ── */
+.lift-hover {
+  transition: transform .2s ease, box-shadow .2s ease, opacity .2s ease;
+}
+.lift-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.35);
+}
+
+/* ── Logo qui pulse très légèrement dans la nav ── */
+@keyframes softPulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.05); }
+}
+.logo-pulse:hover {
+  animation: softPulse 0.6s ease-in-out;
+}
+
+/* Respecte les préférences d'accessibilité : désactive les animations si demandé */
+@media (prefers-reduced-motion: reduce) {
+  .glow-float, .glow-float-alt, .logo-pulse:hover, .modal-pop, .modal-backdrop { animation: none !important; }
+  html { scroll-behavior: auto; }
+  [data-aos] { transition: none !important; transform: none !important; }
+}
+
+/* ── Ouverture de la modal de commande : fondu + léger zoom ── */
+@keyframes modalBackdropIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes modalPopIn {
+  from { opacity: 0; transform: scale(0.94) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.modal-backdrop { animation: modalBackdropIn .2s ease-out; }
+.modal-pop { animation: modalPopIn .28s cubic-bezier(.22,1,.36,1); }
+
+/* ── Bandeau cookies : glisse depuis le bas ── */
+@keyframes slideUpIn {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.cookie-slide-in { animation: slideUpIn .35s cubic-bezier(.22,1,.36,1); }
