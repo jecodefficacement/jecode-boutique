@@ -621,6 +621,10 @@ export default function App() {
             </a>
           </div>
         </div>
+        <div style={{ maxWidth: 900, margin: "1.2rem auto 0", display: "flex", gap: 18, flexWrap: "wrap", fontSize: "0.76rem" }}>
+          <a href="/mentions-legales.html" style={{ color: C.muted, textDecoration: "none" }}>Mentions légales</a>
+          <a href="/confidentialite.html" style={{ color: C.muted, textDecoration: "none" }}>Confidentialité</a>
+        </div>
       </div>
 
       {/* MODAL */}
