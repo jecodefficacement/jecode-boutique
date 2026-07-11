@@ -150,6 +150,53 @@ function Divider() {
 }
 
 // ─────────────────────────────────────────
+//  FAQ — ACCORDÉON
+// ─────────────────────────────────────────
+function FaqItem({ question, reponse, index }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div
+      data-aos="fade-up"
+      data-aos-delay={Math.min(index, 4) * 60}
+      style={{ borderBottom: `1px solid ${C.border}` }}
+    >
+      <button
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        style={{
+          width: "100%", background: "none", border: "none", cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          gap: 12, padding: "1.2rem 0", textAlign: "left",
+        }}
+      >
+        <span style={{ fontWeight: 700, color: C.text, fontSize: "0.92rem" }}>{question}</span>
+        <span style={{
+          flexShrink: 0, color: C.yellow, fontSize: "1.1rem", fontWeight: 700,
+          transform: open ? "rotate(45deg)" : "rotate(0deg)",
+          transition: "transform .25s ease",
+          display: "inline-flex", alignItems: "center", justifyContent: "center",
+          width: 22, height: 22,
+        }}>
+          +
+        </span>
+      </button>
+      <div style={{
+        display: "grid",
+        gridTemplateRows: open ? "1fr" : "0fr",
+        transition: "grid-template-rows .3s ease",
+      }}>
+        <div style={{ overflow: "hidden" }}>
+          <div style={{ color: C.muted, fontSize: "0.85rem", lineHeight: 1.65, paddingBottom: "1.2rem" }}>
+            {reponse}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────
 //  MODAL COMMANDE
 // ─────────────────────────────────────────
 function OrderModal({ produit, onClose }) {
@@ -685,10 +732,7 @@ export default function App() {
           ["Est-ce que je peux partager les guides ?", "Non. Chaque guide est pour usage personnel uniquement. La revente est interdite."],
           ["J'ai une question avant d'acheter ?", "Écris-nous sur WhatsApp — on répond rapidement."],
         ].map(([q, a], i) => (
-          <div key={i} data-aos="fade-up" data-aos-delay={Math.min(i, 4) * 60} style={{ borderBottom: `1px solid ${C.border}`, padding: "1.2rem 0" }}>
-            <div style={{ fontWeight: 700, color: C.text, marginBottom: 6, fontSize: "0.92rem" }}>{q}</div>
-            <div style={{ color: C.muted, fontSize: "0.85rem", lineHeight: 1.65 }}>{a}</div>
-          </div>
+          <FaqItem key={i} question={q} reponse={a} index={i} />
         ))}
       </div>
 
