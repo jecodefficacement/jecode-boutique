@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // ─────────────────────────────────────────
 //  CONFIG
@@ -6,6 +6,7 @@ import { useState } from "react";
 const WHATSAPP    = "224624144006";
 const ORANGE_NUM  = "624 144 006";
 const ORANGE_NOM  = "JeCode";
+const GA_ID        = "G-V75T1W3PH4";
 
 // ─────────────────────────────────────────
 //  COULEURS
@@ -400,6 +401,79 @@ function ProductCard({ produit, onOrder }) {
 // ─────────────────────────────────────────
 //  APP
 // ─────────────────────────────────────────
+// ─────────────────────────────────────────
+//  ANALYTICS (GA4 — chargé uniquement après consentement)
+// ─────────────────────────────────────────
+function loadGoogleAnalytics() {
+  if (document.getElementById("ga4-script")) return; // déjà chargé
+  const s = document.createElement("script");
+  s.id = "ga4-script";
+  s.async = true;
+  s.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
+  document.head.appendChild(s);
+
+  window.dataLayer = window.dataLayer || [];
+  function gtag() { window.dataLayer.push(arguments); }
+  window.gtag = gtag;
+  gtag("js", new Date());
+  gtag("config", GA_ID);
+}
+
+// ─────────────────────────────────────────
+//  BANDEAU COOKIES
+// ─────────────────────────────────────────
+function CookieBanner() {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const choice = localStorage.getItem("jecode-cookie-consent");
+    if (choice === "accepted") {
+      loadGoogleAnalytics();
+    } else if (choice !== "refused") {
+      setVisible(true);
+    }
+  }, []);
+
+  const accept = () => {
+    localStorage.setItem("jecode-cookie-consent", "accepted");
+    loadGoogleAnalytics();
+    setVisible(false);
+  };
+
+  const refuse = () => {
+    localStorage.setItem("jecode-cookie-consent", "refused");
+    setVisible(false);
+  };
+
+  if (!visible) return null;
+
+  return (
+    <div style={{
+      position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 300,
+      background: C.bgCard, borderTop: `1px solid ${C.border}`,
+      padding: "1.1rem 1.5rem", display: "flex", gap: 16,
+      alignItems: "center", justifyContent: "center", flexWrap: "wrap",
+      boxShadow: "0 -8px 30px rgba(0,0,0,0.4)",
+    }}>
+      <p style={{ color: C.text, fontSize: "0.85rem", lineHeight: 1.6, margin: 0, maxWidth: 520 }}>
+        🍪 Ce site utilise des cookies de mesure d'audience (Google Analytics) pour comprendre
+        comment il est utilisé. Tu peux accepter ou refuser.{" "}
+        <a href="/confidentialite.html" style={{ color: C.yellow }}>En savoir plus</a>
+      </p>
+      <div style={{ display: "flex", gap: 10, flexShrink: 0 }}>
+        <button onClick={refuse}
+          style={{ background: "rgba(255,255,255,0.06)", color: C.text, border: `1px solid ${C.border}`, borderRadius: 10, padding: "0.6rem 1.2rem", fontWeight: 700, cursor: "pointer", fontSize: "0.85rem" }}>
+          Refuser
+        </button>
+        <button onClick={accept}
+          style={{ background: gradMain, color: C.white, border: "none", borderRadius: 10, padding: "0.6rem 1.2rem", fontWeight: 800, cursor: "pointer", fontSize: "0.85rem" }}>
+          Accepter
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [orderProduit, setOrderProduit] = useState(null);
   const [activeTab, setActiveTab]       = useState("tous");
@@ -629,6 +703,8 @@ export default function App() {
 
       {/* MODAL */}
       {orderProduit && <OrderModal produit={orderProduit} onClose={() => setOrderProduit(null)} />}
+
+      <CookieBanner />
     </div>
   );
 }
