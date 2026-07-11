@@ -9,6 +9,10 @@ const ORANGE_NUM  = "624 144 006";
 const ORANGE_NOM  = "JeCode";
 const GA_ID        = "G-V75T1W3PH4";
 
+// Taux indicatif GNF → USD (à mettre à jour périodiquement, ~1 USD = 8 770 GNF mi-2026)
+const USD_RATE = 8770;
+const toUSD = (gnf) => (gnf / USD_RATE).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 // ─────────────────────────────────────────
 //  COULEURS
 // ─────────────────────────────────────────
@@ -421,8 +425,18 @@ function ProductCard({ produit, onOrder, index = 0 }) {
           👥 {produit.pour_qui}
         </div>
 
+        <div style={{
+          display: "inline-flex", alignItems: "center", gap: 6, alignSelf: "flex-start",
+          background: produit.type === "guide" ? "rgba(52,211,153,0.1)" : "rgba(255,215,0,0.1)",
+          border: `1px solid ${produit.type === "guide" ? "rgba(52,211,153,0.25)" : "rgba(255,215,0,0.25)"}`,
+          color: produit.type === "guide" ? "#34D399" : C.yellow,
+          borderRadius: 8, padding: "0.3rem 0.6rem", fontSize: "0.7rem", fontWeight: 700,
+        }}>
+          {produit.type === "guide" ? "🌍 Livré partout dans le monde (WhatsApp)" : "📍 Présentiel — Conakry uniquement"}
+        </div>
+
         <div style={{ marginTop: "auto", paddingTop: 12, borderTop: `1px solid ${C.border}` }}>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 12 }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 2, flexWrap: "wrap" }}>
             <span style={{ color: C.white, fontWeight: 900, fontSize: "1.4rem", fontFamily: "'Space Grotesk', sans-serif" }}>
               {produit.prix.toLocaleString()}
             </span>
@@ -430,6 +444,9 @@ function ProductCard({ produit, onOrder, index = 0 }) {
             {produit.type === "guide" && (
               <span style={{ color: C.muted, fontSize: "0.72rem", marginLeft: 4 }}>• PDF immédiat</span>
             )}
+          </div>
+          <div style={{ color: C.muted, fontSize: "0.76rem", marginBottom: 10 }}>
+            ≈ ${toUSD(produit.prix)} USD
           </div>
           <button onClick={() => onOrder(produit)} className="lift-hover"
             style={{
@@ -574,7 +591,7 @@ export default function App() {
           </div>
           <div>
             <div style={{ fontWeight: 900, fontSize: "1rem", color: C.white, fontFamily: "'Space Grotesk', sans-serif" }}>JeCode</div>
-            <div style={{ fontSize: "0.65rem", color: C.muted }}>Conakry · Guinée</div>
+            <div style={{ fontSize: "0.65rem", color: C.muted }}>Depuis la Guinée · pour toute l'Afrique</div>
           </div>
         </div>
         <a href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noreferrer"
@@ -590,7 +607,7 @@ export default function App() {
         <div className="glow-float-alt" style={{ position: "absolute", bottom: "10%", right: "10%", width: 250, height: 250, background: "radial-gradient(circle, rgba(204,0,102,0.2) 0%, transparent 70%)", pointerEvents: "none" }} />
 
         <div data-aos="fade-down" data-aos-delay="0" style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,215,0,0.08)", border: "1px solid rgba(255,215,0,0.2)", color: C.yellow, borderRadius: 20, padding: "0.3rem 1rem", fontSize: "0.72rem", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 24 }}>
-          ✦ Formations & Guides IA · Conakry 2026
+          ✦ Formations & Guides IA · Made in Africa
         </div>
 
         <h1 data-aos="fade-up" data-aos-delay="100" style={{ fontSize: "clamp(2.2rem, 6vw, 3.6rem)", fontWeight: 900, lineHeight: 1.1, marginBottom: 18, fontFamily: "'Space Grotesk', sans-serif" }}>
@@ -604,7 +621,7 @@ export default function App() {
         </h1>
 
         <p data-aos="fade-up" data-aos-delay="200" style={{ color: C.muted, fontSize: "1rem", lineHeight: 1.75, maxWidth: 540, margin: "0 auto 2.5rem" }}>
-          Des formations et guides pratiques créés à Conakry pour la jeunesse africaine —
+          Des formations et guides pratiques créés en Afrique, pour l'Afrique et au-delà —
           pour ceux qui veulent vraiment comprendre, créer et avancer.
         </p>
 
@@ -680,11 +697,12 @@ export default function App() {
               <span style={{ color: C.muted, fontSize: "0.82rem" }}>GNF</span>
             </div>
           </div>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 10, justifyContent: "center", marginBottom: 24 }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 10, justifyContent: "center", marginBottom: 4, flexWrap: "wrap" }}>
             <span style={{ color: C.yellow, fontWeight: 900, fontSize: "2rem", fontFamily: "'Space Grotesk', sans-serif" }}>620 000</span>
             <span style={{ color: C.muted }}>GNF</span>
             <span style={{ background: "rgba(255,215,0,0.12)", color: C.yellow, borderRadius: 6, padding: "2px 8px", fontSize: "0.78rem", fontWeight: 700 }}>Économise 155 000 GNF</span>
           </div>
+          <div style={{ color: C.muted, fontSize: "0.8rem", marginBottom: 20 }}>≈ ${toUSD(620000)} USD</div>
           <a href={`https://wa.me/${WHATSAPP}?text=${packWa}`} target="_blank" rel="noreferrer"
             style={{ display: "inline-block", background: gradMain, color: C.white, borderRadius: 14, padding: "1rem 2.5rem", fontWeight: 800, textDecoration: "none", fontSize: "1rem" }}>
             Commander le pack complet →
@@ -700,12 +718,12 @@ export default function App() {
           Pourquoi JeCode ?
         </h2>
         <p data-aos="fade-up" data-aos-delay="80" style={{ color: C.muted, marginBottom: 36, fontSize: "0.9rem" }}>
-          Créé à Conakry, pour la jeunesse guinéenne et africaine.
+          Créé en Guinée, pensé pour toute l'Afrique — et accessible partout ailleurs.
         </p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
           {[
             ["🎯", "Contenu concret", "Des guides 100% pratiques — pas de théorie vide. Chaque page est actionnable."],
-            ["🇬🇳", "Fait en Guinée", "Créé par quelqu'un qui comprend le contexte africain et ses réalités."],
+            ["🌍", "Racines africaines", "Créé à Conakry par quelqu'un qui comprend le contexte africain — et livré partout dans le monde."],
             ["⚡", "Résultats rapides", "Tu peux appliquer ce que tu apprends le jour même de l'achat."],
             ["💬", "Support WhatsApp", "Des questions après l'achat ? On répond. Tu n'es pas seul."],
           ].map(([e, t, d], i) => (
@@ -726,8 +744,9 @@ export default function App() {
           Questions fréquentes
         </h2>
         {[
-          ["Comment je reçois mon guide PDF ?", "Après le paiement Orange Money, envoie ta confirmation sur WhatsApp avec la référence. Tu reçois ton PDF dans l'heure."],
-          ["La formation présentielle, c'est quand ?", "Du 3 Août au 3 Septembre 2026 à Kountia OAS, Conakry. Le paiement de 500 000 GNF se fait en présentiel."],
+          ["Comment je reçois mon guide PDF ?", "Après le paiement, envoie ta confirmation sur WhatsApp avec la référence. Tu reçois ton PDF dans l'heure, où que tu sois dans le monde."],
+          ["Je suis hors de Guinée, comment je paie ?", "Le paiement Orange Money est pour l'instant pensé pour la Guinée. Si tu es ailleurs en Afrique ou dans le monde, écris-nous directement sur WhatsApp : on trouve ensemble une solution adaptée (virement, Wave, PayPal...)."],
+          ["La formation présentielle, c'est quand ?", "Du 3 Août au 3 Septembre 2026 à Kountia OAS, Conakry. Uniquement en présentiel — les guides PDF, eux, sont accessibles partout."],
           ["Les guides fonctionnent avec quelle IA ?", "Tous les guides sont compatibles avec ChatGPT, Claude et Gemini — tous gratuits."],
           ["Est-ce que je peux partager les guides ?", "Non. Chaque guide est pour usage personnel uniquement. La revente est interdite."],
           ["J'ai une question avant d'acheter ?", "Écris-nous sur WhatsApp — on répond rapidement."],
