@@ -58,7 +58,7 @@ async function traiterCommandeConfirmee(commande) {
   const lienTelechargement = `${SITE_URL}/api/download/${telechargement.token}`;
 
   // 2) Email de confirmation avec le lien
-  await resend.emails.send({
+  const { data: emailData, error: emailError } = await resend.emails.send({
     from: "JeCode <onboarding@resend.dev>", // à remplacer par un domaine vérifié plus tard
     to: commande.email_client,
     subject: `Ta commande JeCode est confirmée — ${produit.nom}`,
@@ -77,7 +77,13 @@ async function traiterCommandeConfirmee(commande) {
     `,
   });
 
-  return { lienTelechargement };
+  if (emailError) {
+    // On ne bloque pas le téléchargement si l'email échoue, mais on trace l'erreur clairement
+    console.error("Erreur envoi email Resend:", emailError);
+    return { lienTelechargement, emailEnvoye: false, emailError: emailError.message || emailError };
+  }
+
+  return { lienTelechargement, emailEnvoye: true };
 }
 
 module.exports = { traiterCommandeConfirmee, filigranerPdf };
