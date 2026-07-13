@@ -59,7 +59,7 @@ async function traiterCommandeConfirmee(commande) {
 
   // 2) Email de confirmation avec le lien
   const { data: emailData, error: emailError } = await resend.emails.send({
-    from: "JeCode <onboarding@resend.dev>", // à remplacer par un domaine vérifié plus tard
+    from: "JeCode <commandes@jecodeboutique.com>",
     to: commande.email_client,
     subject: `Ta commande JeCode est confirmée — ${produit.nom}`,
     html: `
