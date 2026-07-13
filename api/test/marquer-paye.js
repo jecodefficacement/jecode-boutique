@@ -32,8 +32,8 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { lienTelechargement } = await traiterCommandeConfirmee(commande);
-    return res.status(200).json({ ok: true, lienTelechargement });
+    const resultat = await traiterCommandeConfirmee(commande);
+    return res.status(200).json({ ok: true, ...resultat });
   } catch (e) {
     console.error(e);
     return res.status(500).json({ error: e.message });
