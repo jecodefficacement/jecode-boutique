@@ -207,6 +207,9 @@ function OrderModal({ produit, onClose }) {
   const [step, setStep]   = useState(1);
   const [form, setForm]   = useState({ nom: "", telephone: "", email: "", niveau: "" });
   const [errors, setErrors] = useState({});
+  const [moyenPaiement, setMoyenPaiement] = useState(null); // "orange" | "cinetpay"
+  const [chargementCinetpay, setChargementCinetpay] = useState(false);
+  const [erreurCinetpay, setErreurCinetpay] = useState("");
   const isFormation = produit.type === "formation";
 
   const set = (k, v) => { setForm(f => ({ ...f, [k]: v })); setErrors(e => ({ ...e, [k]: undefined })); };
@@ -226,6 +229,35 @@ function OrderModal({ produit, onClose }) {
   };
 
   const ref = `JECODE-${produit.id.toUpperCase()}-${form.nom.split(" ")[0].toUpperCase()}`;
+
+  const payerAvecCinetPay = async () => {
+    if (!form.email.trim()) {
+      setErreurCinetpay("Un email est requis pour payer par carte/Wave.");
+      return;
+    }
+    setChargementCinetpay(true);
+    setErreurCinetpay("");
+    try {
+      const res = await fetch("/api/cinetpay/init", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          produit_id: produit.id,
+          email_client: form.email.trim(),
+          telephone_client: form.telephone.trim(),
+          nom_client: form.nom.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.paymentUrl) {
+        throw new Error(data.error || "Erreur inconnue");
+      }
+      window.location.href = data.paymentUrl; // redirection vers la page de paiement CinetPay
+    } catch (e) {
+      setErreurCinetpay("Impossible de démarrer le paiement pour le moment. Réessaie ou choisis Orange Money.");
+      setChargementCinetpay(false);
+    }
+  };
 
   const waMsg = isFormation
     ? encodeURIComponent(`Bonjour JeCode ! Je souhaite m'inscrire à la formation Algo·C·C++ (500 000 GNF).\n\nNom : ${form.nom}\nTéléphone : ${form.telephone}${form.email ? `\nEmail : ${form.email}` : ""}\nNiveau : ${form.niveau}\n\nMerci de confirmer ma place.`)
@@ -304,8 +336,39 @@ function OrderModal({ produit, onClose }) {
           </div>
         )}
 
-        {/* STEP 2 — Paiement (guides seulement) */}
-        {step === 2 && !isFormation && (
+        {/* STEP 2 — Choix du moyen de paiement (guides seulement) */}
+        {step === 2 && !isFormation && !moyenPaiement && (
+          <div>
+            <div style={{ color: C.muted, fontSize: "0.82rem", marginBottom: 14 }}>
+              Comment veux-tu payer ?
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 18 }}>
+              <button onClick={() => setMoyenPaiement("orange")}
+                style={{ display: "flex", alignItems: "center", gap: 12, textAlign: "left", background: "rgba(255,215,0,0.06)", border: "1.5px solid rgba(255,215,0,0.25)", borderRadius: 14, padding: "1rem", cursor: "pointer" }}>
+                <span style={{ fontSize: 26 }}>📱</span>
+                <div>
+                  <div style={{ color: C.text, fontWeight: 700, fontSize: "0.9rem" }}>Orange Money</div>
+                  <div style={{ color: C.muted, fontSize: "0.76rem" }}>Paiement manuel + confirmation WhatsApp</div>
+                </div>
+              </button>
+              <button onClick={() => setMoyenPaiement("cinetpay")}
+                style={{ display: "flex", alignItems: "center", gap: 12, textAlign: "left", background: "rgba(124,58,237,0.08)", border: "1.5px solid rgba(124,58,237,0.3)", borderRadius: 14, padding: "1rem", cursor: "pointer" }}>
+                <span style={{ fontSize: 26 }}>💳</span>
+                <div>
+                  <div style={{ color: C.text, fontWeight: 700, fontSize: "0.9rem" }}>Carte bancaire, Wave & Mobile Money</div>
+                  <div style={{ color: C.muted, fontSize: "0.76rem" }}>Paiement automatique et immédiat via CinetPay</div>
+                </div>
+              </button>
+            </div>
+            <button onClick={() => setStep(1)}
+              style={{ width: "100%", background: "rgba(255,255,255,0.06)", color: C.text, border: `1px solid ${C.border}`, borderRadius: 12, padding: "0.85rem", fontWeight: 700, cursor: "pointer", fontSize: "0.88rem" }}>
+              ← Retour
+            </button>
+          </div>
+        )}
+
+        {/* STEP 2 — Orange Money (manuel) */}
+        {step === 2 && !isFormation && moyenPaiement === "orange" && (
           <div>
             <div style={{ background: "rgba(255,215,0,0.06)", border: "1px solid rgba(255,215,0,0.18)", borderRadius: 14, padding: "1.2rem", marginBottom: 16 }}>
               <div style={{ color: C.yellow, fontWeight: 800, fontSize: "0.82rem", marginBottom: 12, letterSpacing: 0.5 }}>
@@ -329,13 +392,45 @@ function OrderModal({ produit, onClose }) {
               💡 Après le paiement, clique sur "J'ai payé" — un message WhatsApp s'ouvrira. Envoie-le pour confirmer et recevoir ton guide.
             </div>
             <div style={{ display: "flex", gap: 10 }}>
-              <button onClick={() => setStep(1)}
+              <button onClick={() => setMoyenPaiement(null)}
                 style={{ flex: 1, background: "rgba(255,255,255,0.06)", color: C.text, border: `1px solid ${C.border}`, borderRadius: 12, padding: "0.85rem", fontWeight: 700, cursor: "pointer", fontSize: "0.88rem" }}>
                 ← Retour
               </button>
               <button onClick={() => setStep(3)}
                 style={{ flex: 2, background: produit.gradient, color: C.white, border: "none", borderRadius: 12, padding: "0.85rem", fontWeight: 800, cursor: "pointer", fontSize: "0.88rem" }}>
                 ✅ J'ai payé !
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 2 — CinetPay (carte / Wave / mobile money) */}
+        {step === 2 && !isFormation && moyenPaiement === "cinetpay" && (
+          <div>
+            <div style={{ background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.25)", borderRadius: 14, padding: "1.2rem", marginBottom: 16 }}>
+              <div style={{ color: C.text, fontWeight: 800, fontSize: "0.82rem", marginBottom: 10 }}>
+                💳 PAIEMENT SÉCURISÉ VIA CINETPAY
+              </div>
+              <div style={{ color: C.muted, fontSize: "0.85rem", lineHeight: 1.6 }}>
+                Tu vas être redirigé(e) vers une page de paiement sécurisée où tu pourras choisir
+                carte bancaire, Wave, ou mobile money. Montant : <strong style={{ color: C.text }}>{produit.prix.toLocaleString()} GNF</strong> (≈ ${toUSD(produit.prix)} USD).
+              </div>
+            </div>
+            {!form.email.trim() && (
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ display: "block", color: C.muted, fontSize: "0.78rem", fontWeight: 600, marginBottom: 5 }}>Email *</label>
+                <input value={form.email} onChange={e => set("email", e.target.value)} placeholder="ton@email.com" style={inputSx(erreurCinetpay)} />
+              </div>
+            )}
+            {erreurCinetpay && <p style={{ color: C.rose, fontSize: "0.78rem", marginBottom: 12 }}>⚠ {erreurCinetpay}</p>}
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={() => setMoyenPaiement(null)} disabled={chargementCinetpay}
+                style={{ flex: 1, background: "rgba(255,255,255,0.06)", color: C.text, border: `1px solid ${C.border}`, borderRadius: 12, padding: "0.85rem", fontWeight: 700, cursor: "pointer", fontSize: "0.88rem" }}>
+                ← Retour
+              </button>
+              <button onClick={payerAvecCinetPay} disabled={chargementCinetpay}
+                style={{ flex: 2, background: produit.gradient, color: C.white, border: "none", borderRadius: 12, padding: "0.85rem", fontWeight: 800, cursor: chargementCinetpay ? "default" : "pointer", fontSize: "0.88rem", opacity: chargementCinetpay ? 0.7 : 1 }}>
+                {chargementCinetpay ? "Redirection…" : "Payer maintenant →"}
               </button>
             </div>
           </div>
