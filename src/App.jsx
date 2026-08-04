@@ -45,7 +45,7 @@ const GUIDES = [
     id: "g1",
     type: "guide",
     emoji: "🗣️",
-    tag: "GRATUIT",
+    tag: "OFFERT",
     tagColor: "#22C55E",
     tagBg: "#052e16",
     titre: "Parler a l'IA pour obtenir des resultats",
