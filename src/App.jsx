@@ -120,7 +120,7 @@ const GUIDES = [
     tagBg: "#2D1000",
     titre: "Fais ta demande avec un site web",
     sous_titre: "Mariage · Rencard · Anniversaire · Pardon",
-    prix: 200000,
+    prix: 500000,
     couleur: C.rose,
     gradient: `linear-gradient(135deg, #CC0066, #9333EA)`,
     accroche: "Sans coder. Sans payer un développeur. Crée un site interactif pour faire ta demande — mariage, rencard, anniversaire, pardon — et reçois la réponse directement par e-mail.",
@@ -158,6 +158,28 @@ const FORMATION = {
     "Projet pratique : votre boutique en ligne fonctionnelle",
     "Attestation de fin de formation",
     "Durée : 2 semaines · Lieu à définir selon votre quartier (réservation en ligne à venir)",
+  ],
+};
+
+const SITE_PERSO = {
+  id: "site-perso",
+  type: "service",
+  emoji: "💻",
+  tag: "SUR MESURE",
+  tagColor: "#38BDF8",
+  tagBg: "#001B2E",
+  titre: "Un site personnalisé pour un moment unique",
+  sous_titre: "Anniversaire · Invitation · Surprise",
+  prix: 50000,
+  couleur: "#38BDF8",
+  gradient: `linear-gradient(135deg, #0EA5E9, #7C3AED)`,
+  accroche: "Comme le site d'anniversaire de Kadiatou ou l'invitation à sortir : une page unique, animée et personnalisée à ton nom pour surprendre quelqu'un.",
+  pour_qui: "Anniversaires · Demandes · Surprises · Cadeaux originaux",
+  points: [
+    "Design personnalisé selon l'occasion",
+    "Prénom et détails de la personne intégrés",
+    "Animations et interactions sur mesure",
+    "Livré en ligne, prêt à partager par lien",
   ],
 };
 
@@ -230,12 +252,13 @@ function FaqItem({ question, reponse, index }) {
 // ─────────────────────────────────────────
 function OrderModal({ produit, onClose }) {
   const [step, setStep]   = useState(1);
-  const [form, setForm]   = useState({ nom: "", telephone: "", email: "", niveau: "" });
+  const [form, setForm]   = useState({ nom: "", telephone: "", email: "", niveau: "", detailsSite: "" });
   const [errors, setErrors] = useState({});
   const [moyenPaiement, setMoyenPaiement] = useState(null); // "orange" | "cinetpay"
   const [chargementCinetpay, setChargementCinetpay] = useState(false);
   const [erreurCinetpay, setErreurCinetpay] = useState("");
   const isFormation = produit.type === "formation";
+  const isService = produit.type === "service";
 
   const set = (k, v) => { setForm(f => ({ ...f, [k]: v })); setErrors(e => ({ ...e, [k]: undefined })); };
 
@@ -244,6 +267,7 @@ function OrderModal({ produit, onClose }) {
     if (!form.nom.trim())       e.nom       = "Requis";
     if (!form.telephone.trim()) e.telephone = "Requis";
     if (isFormation && !form.niveau) e.niveau = "Requis";
+    if (isService && !form.detailsSite.trim()) e.detailsSite = "Requis";
     return e;
   };
 
@@ -285,7 +309,9 @@ function OrderModal({ produit, onClose }) {
   };
 
   const waMsg = isFormation
-    ? encodeURIComponent(`Bonjour JeCode ! Je souhaite m'inscrire à la formation Algo·C·C++ (500 000 GNF).\n\nNom : ${form.nom}\nTéléphone : ${form.telephone}${form.email ? `\nEmail : ${form.email}` : ""}\nNiveau : ${form.niveau}\n\nMerci de confirmer ma place.`)
+    ? encodeURIComponent(`Bonjour JeCode ! Je souhaite m'inscrire à la formation "${produit.titre}" (${produit.prix.toLocaleString()} GNF).\n\nNom : ${form.nom}\nTéléphone : ${form.telephone}${form.email ? `\nEmail : ${form.email}` : ""}\nNiveau : ${form.niveau}\n\nMerci de confirmer ma place.`)
+    : isService
+    ? encodeURIComponent(`Bonjour JeCode ! Je viens de payer pour un site personnalisé (${produit.prix.toLocaleString()} GNF).\n\nNom : ${form.nom}\nTéléphone : ${form.telephone}${form.email ? `\nEmail : ${form.email}` : ""}\nDétails : ${form.detailsSite}\nRéférence : ${ref}\n\nMerci de me confirmer la réception et de me recontacter pour finaliser le site.`)
     : encodeURIComponent(`Bonjour JeCode ! Je viens de payer pour le guide "${produit.titre}" (${produit.prix.toLocaleString()} GNF).\n\nNom : ${form.nom}\nTéléphone : ${form.telephone}${form.email ? `\nEmail : ${form.email}` : ""}\nRéférence : ${ref}\n\nMerci de me confirmer la réception et m'envoyer le guide.`);
 
   const inputSx = (err) => ({
@@ -352,6 +378,13 @@ function OrderModal({ produit, onClose }) {
                   <option value="Autre">Autre</option>
                 </select>
                 {errors.niveau && <p style={{ color: C.rose, fontSize: "0.74rem", marginTop: 3 }}>⚠ {errors.niveau}</p>}
+              </div>
+            )}
+            {isService && (
+              <div>
+                <label style={{ display: "block", color: C.muted, fontSize: "0.78rem", fontWeight: 600, marginBottom: 5 }}>Occasion et prénom du/de la destinataire *</label>
+                <input value={form.detailsSite} onChange={e => set("detailsSite", e.target.value)} placeholder="Ex : Anniversaire de Kadiatou" style={inputSx(errors.detailsSite)} />
+                {errors.detailsSite && <p style={{ color: C.rose, fontSize: "0.74rem", marginTop: 3 }}>⚠ {errors.detailsSite}</p>}
               </div>
             )}
             <button onClick={handleNext}
@@ -470,12 +503,14 @@ function OrderModal({ produit, onClose }) {
             </h3>
             <p style={{ color: C.muted, lineHeight: 1.7, marginBottom: 22, fontSize: "0.88rem" }}>
               {isFormation
-                ? "Clique ci-dessous pour envoyer ta demande d'inscription sur WhatsApp. Nous te confirmerons ta place et les modalités de paiement (500 000 GNF en présentiel)."
+                ? `Clique ci-dessous pour envoyer ta demande d'inscription sur WhatsApp. Nous te confirmerons ta place et les modalités de paiement (${produit.prix.toLocaleString()} GNF en présentiel).`
+                : isService
+                ? "Clique ci-dessous pour envoyer ta confirmation de paiement. On te recontacte rapidement pour finaliser ton site avec tous les détails."
                 : "Clique ci-dessous pour envoyer ta confirmation de paiement. Tu recevras ton guide PDF dès vérification."}
             </p>
             {isFormation && (
               <div style={{ background: "rgba(255,215,0,0.06)", border: "1px solid rgba(255,215,0,0.18)", borderRadius: 12, padding: "0.9rem", marginBottom: 18, fontSize: "0.82rem", color: C.muted, lineHeight: 1.6 }}>
-                💡 Le paiement de <strong style={{ color: C.yellow }}>500 000 GNF</strong> se fait en présentiel le jour de l'inscription à Kountia OAS.
+                💡 Le paiement de <strong style={{ color: C.yellow }}>{produit.prix.toLocaleString()} GNF</strong> se fait en présentiel le jour de l'inscription à Kountia OAS.
               </div>
             )}
             <a href={`https://wa.me/${WHATSAPP}?text=${waMsg}`} target="_blank" rel="noreferrer"
@@ -681,7 +716,7 @@ export default function App() {
     : activeTab === "guides" ? GUIDES
     : [FORMATION];
 
-  const packWa = encodeURIComponent("Bonjour JeCode ! Je veux commander le PACK COMPLET (3 guides + formation). Pouvez-vous me donner les détails ?");
+  const packWa = encodeURIComponent("Bonjour JeCode ! Je veux commander le PACK COMPLET (4 guides, 585 000 GNF). Pouvez-vous me donner les détails ?");
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, color: C.text }}>
@@ -737,7 +772,7 @@ export default function App() {
 
         {/* Stats */}
         <div data-aos="fade-up" data-aos-delay="300" style={{ display: "flex", gap: 40, justifyContent: "center", flexWrap: "wrap", marginBottom: 32 }}>
-          {[["3", "Guides PDF"], ["1", "Formation présentielle"], ["500+", "Étudiants formés"]].map(([v, l]) => (
+          {[["4", "Guides PDF"], ["1", "Formation présentielle"], ["500+", "Étudiants formés"]].map(([v, l]) => (
             <div key={l} style={{ textAlign: "center" }}>
               <div style={{ fontWeight: 900, fontSize: "1.8rem", fontFamily: "'Space Grotesk', sans-serif", color: C.white }}>{v}</div>
               <div style={{ color: C.muted, fontSize: "0.78rem" }}>{l}</div>
@@ -794,25 +829,25 @@ export default function App() {
         <div data-aos="zoom-in" style={{ marginTop: 40, background: "linear-gradient(135deg, rgba(70,0,140,0.35), rgba(204,0,102,0.35))", border: "1px solid rgba(124,58,237,0.35)", borderRadius: 22, padding: "2.2rem", textAlign: "center" }}>
           <Tag color={C.yellow} bg="#2D2000">🔥 OFFRE SPÉCIALE</Tag>
           <h3 style={{ fontWeight: 900, fontSize: "1.4rem", margin: "12px 0 6px", fontFamily: "'Space Grotesk', sans-serif" }}>
-            Pack Complet — Tout JeCode
+            Pack Complet — Les 4 guides
           </h3>
           <p style={{ color: C.muted, fontSize: "0.88rem", marginBottom: 20, lineHeight: 1.65 }}>
-            Les 3 guides PDF + la formation présentielle — tout ce qu'il faut pour maîtriser le code et l'IA.
+            Les 4 guides PDF JeCode — tout ce qu'il faut pour maîtriser le code, l'IA et créer tes propres sites.
           </p>
           <div style={{ display: "flex", gap: 14, justifyContent: "center", alignItems: "center", flexWrap: "wrap", marginBottom: 20 }}>
             <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-              {["50 000", "75 000", "150 000", "500 000"].map((p, i) => (
+              {["25 000", "50 000", "75 000", "500 000"].map((p, i) => (
                 <span key={i} style={{ color: C.muted, fontSize: "0.82rem", textDecoration: "line-through" }}>{p}</span>
               ))}
               <span style={{ color: C.muted, fontSize: "0.82rem" }}>GNF</span>
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 10, justifyContent: "center", marginBottom: 4, flexWrap: "wrap" }}>
-            <span style={{ color: C.yellow, fontWeight: 900, fontSize: "2rem", fontFamily: "'Space Grotesk', sans-serif" }}>620 000</span>
+            <span style={{ color: C.yellow, fontWeight: 900, fontSize: "2rem", fontFamily: "'Space Grotesk', sans-serif" }}>585 000</span>
             <span style={{ color: C.muted }}>GNF</span>
-            <span style={{ background: "rgba(255,215,0,0.12)", color: C.yellow, borderRadius: 6, padding: "2px 8px", fontSize: "0.78rem", fontWeight: 700 }}>Économise 155 000 GNF</span>
+            <span style={{ background: "rgba(255,215,0,0.12)", color: C.yellow, borderRadius: 6, padding: "2px 8px", fontSize: "0.78rem", fontWeight: 700 }}>Économise 65 000 GNF</span>
           </div>
-          <div style={{ color: C.muted, fontSize: "0.8rem", marginBottom: 20 }}>≈ ${toUSD(620000)} USD</div>
+          <div style={{ color: C.muted, fontSize: "0.8rem", marginBottom: 20 }}>≈ ${toUSD(585000)} USD</div>
           <a href={`https://wa.me/${WHATSAPP}?text=${packWa}`} target="_blank" rel="noreferrer"
             style={{ display: "inline-block", background: gradMain, color: C.white, borderRadius: 14, padding: "1rem 2.5rem", fontWeight: 800, textDecoration: "none", fontSize: "1rem" }}>
             Commander le pack complet →
@@ -855,13 +890,35 @@ export default function App() {
         </h2>
         {[
           ["Comment je reçois mon guide PDF ?", "Après le paiement Orange Money, envoie ta confirmation sur WhatsApp avec la référence. Tu reçois ton PDF dans l'heure."],
-          ["La formation présentielle, c'est quand ?", "Du 3 Août au 3 Septembre 2026 à Kountia OAS, Conakry. Le paiement de 500 000 GNF se fait en présentiel."],
+          ["La formation présentielle, c'est quand ?", "Du 3 Août au 3 Septembre 2026 à Kountia OAS, Conakry. Le paiement de 1 000 000 GNF se fait en présentiel."],
           ["Les guides fonctionnent avec quelle IA ?", "Tous les guides sont compatibles avec ChatGPT, Claude et Gemini — tous gratuits."],
           ["Est-ce que je peux partager les guides ?", "Non. Chaque guide est pour usage personnel uniquement. La revente est interdite."],
           ["J'ai une question avant d'acheter ?", "Écris-nous sur WhatsApp — on répond rapidement."],
         ].map(([q, a], i) => (
           <FaqItem key={i} question={q} reponse={a} index={i} />
         ))}
+      </div>
+
+      {/* ── SITE PERSONNALISÉ ── */}
+      <div style={{ maxWidth: 700, margin: "0 auto", padding: "0 1.5rem 4rem", textAlign: "center" }}>
+        <div data-aos="zoom-in" style={{ background: "linear-gradient(135deg, rgba(14,165,233,0.18), rgba(124,58,237,0.25))", border: "1px solid rgba(56,189,248,0.3)", borderRadius: 22, padding: "2.2rem" }}>
+          <Tag color="#38BDF8" bg="#001B2E">💻 NOUVEAU</Tag>
+          <h3 style={{ fontWeight: 900, fontSize: "1.3rem", margin: "12px 0 6px", fontFamily: "'Space Grotesk', sans-serif" }}>
+            Un site pour un moment unique
+          </h3>
+          <p style={{ color: C.muted, fontSize: "0.88rem", marginBottom: 20, lineHeight: 1.65 }}>
+            Anniversaire, demande, surprise... comme le site d'anniversaire de Kadiatou ou l'invitation à sortir —
+            on te crée une page personnalisée, animée, à envoyer par simple lien.
+          </p>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 10, justifyContent: "center", marginBottom: 20 }}>
+            <span style={{ color: "#38BDF8", fontWeight: 900, fontSize: "1.8rem", fontFamily: "'Space Grotesk', sans-serif" }}>50 000</span>
+            <span style={{ color: C.muted }}>GNF</span>
+          </div>
+          <button onClick={() => setOrderProduit(SITE_PERSO)} className="lift-hover"
+            style={{ background: SITE_PERSO.gradient, color: C.white, border: "none", borderRadius: 14, padding: "1rem 2.5rem", fontWeight: 800, cursor: "pointer", fontSize: "1rem" }}>
+            Commander mon site →
+          </button>
+        </div>
       </div>
 
       {/* ── FOOTER ── */}
