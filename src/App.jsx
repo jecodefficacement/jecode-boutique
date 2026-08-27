@@ -118,7 +118,7 @@ const GUIDES = [
     tag: "PREMIUM",
     tagColor: "#FB923C",
     tagBg: "#2D1000",
-    titre: "Fais ta demande avec un site web",
+    titre: "Apprends à faire ta demande avec un site web",
     sous_titre: "Mariage · Rencard · Anniversaire · Pardon",
     prix: 500000,
     couleur: C.rose,
