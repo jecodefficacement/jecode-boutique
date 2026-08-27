@@ -907,8 +907,7 @@ export default function App() {
             Un site pour un moment unique
           </h3>
           <p style={{ color: C.muted, fontSize: "0.88rem", marginBottom: 20, lineHeight: 1.65 }}>
-            Anniversaire, demande, surprise... comme le site d'anniversaire de Kadiatou ou l'invitation à sortir —
-            on te crée une page personnalisée, animée, à envoyer par simple lien.
+            Surprenez nos proches : Anniversaire, demande de sortie, carte d'invitation... — on te crée une page personnalisée, animée, à envoyer par simple lien.
           </p>
           <div style={{ display: "flex", alignItems: "baseline", gap: 10, justifyContent: "center", marginBottom: 20 }}>
             <span style={{ color: "#38BDF8", fontWeight: 900, fontSize: "1.8rem", fontFamily: "'Space Grotesk', sans-serif" }}>50 000</span>
