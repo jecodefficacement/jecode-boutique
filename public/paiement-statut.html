@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Statut de ta commande — JeCode</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Inter, Arial, sans-serif; background: #0D0020; color: #F0E8FF;
+      min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+    }
+    .card {
+      background: #150030; border: 1px solid #2E0060; border-radius: 20px;
+      padding: 2.5rem 2rem; max-width: 420px; width: 100%; text-align: center;
+    }
+    .icon { font-size: 3rem; margin-bottom: 1rem; }
+    h1 { font-family: 'Space Grotesk', sans-serif; font-size: 1.3rem; margin-bottom: 0.6rem; }
+    p { color: #B9A6D9; font-size: 0.9rem; line-height: 1.6; }
+    .spinner {
+      width: 34px; height: 34px; border: 3px solid #2E0060; border-top-color: #FFD700;
+      border-radius: 50%; margin: 0 auto 1rem; animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    a.btn {
+      display: inline-block; margin-top: 1.2rem; background: linear-gradient(135deg, #46008C, #CC0066);
+      color: white; text-decoration: none; font-weight: 700; padding: 0.8rem 1.8rem; border-radius: 12px;
+    }
+    a.retry { color: #9B7EC8; font-size: 0.85rem; display: inline-block; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <div class="card" id="card">
+    <div class="spinner"></div>
+    <h1>Vérification de ton paiement…</h1>
+    <p>Merci de patienter quelques secondes, on confirme tout avec CinetPay.</p>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get("ref");
+    const card = document.getElementById("card");
+
+    function afficherEnAttente() {
+      card.innerHTML = `
+        <div class="spinner"></div>
+        <h1>Vérification de ton paiement…</h1>
+        <p>Merci de patienter quelques secondes, on confirme tout avec CinetPay.</p>
+      `;
+    }
+
+    function afficherConfirme(produit, lien) {
+      card.innerHTML = `
+        <div class="icon">✅</div>
+        <h1>Paiement confirmé !</h1>
+        <p>Ta commande <strong>${produit}</strong> est validée. Un email vient de t'être envoyé avec ton lien de téléchargement.</p>
+        ${lien ? `<a class="btn" href="${lien}">Télécharger maintenant</a>` : ""}
+      `;
+    }
+
+    function afficherEchec() {
+      card.innerHTML = `
+        <div class="icon">❌</div>
+        <h1>Paiement non abouti</h1>
+        <p>Le paiement n'a pas pu être confirmé. Aucun montant ne devrait avoir été débité — si c'est le cas, contacte-nous sur WhatsApp.</p>
+        <a class="btn" href="https://wa.me/224624144006">Contacter le support</a>
+      `;
+    }
+
+    function afficherErreur() {
+      card.innerHTML = `
+        <div class="icon">⚠️</div>
+        <h1>Référence introuvable</h1>
+        <p>Impossible de retrouver cette commande. Contacte-nous sur WhatsApp avec ta référence si le problème persiste.</p>
+        <a class="btn" href="https://wa.me/224624144006">Contacter le support</a>
+      `;
+    }
+
+    async function verifier() {
+      if (!ref) return afficherErreur();
+      try {
+        const res = await fetch(`/api/commandes/statut?ref=${encodeURIComponent(ref)}`);
+        if (!res.ok) return afficherErreur();
+        const data = await res.json();
+
+        if (data.statut === "paye") {
+          afficherConfirme(data.produit_nom, data.lienTelechargement);
+        } else if (data.statut === "echoue") {
+          afficherEchec();
+        } else {
+          afficherEnAttente();
+          setTimeout(verifier, 3000); // re-vérifie toutes les 3s tant que "en_attente"
+        }
+      } catch (e) {
+        afficherErreur();
+      }
+    }
+
+    verifier();
+  </script>
+</body>
+</html>
