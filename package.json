@@ -13,7 +13,7 @@
     "pdf-lib": "^1.17.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "resend": "^6.17.2"
+    "resend": "^6.17.2",
     "cinetpay-js": "latest"
   },
   "devDependencies": {
