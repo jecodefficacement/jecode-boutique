@@ -65,6 +65,7 @@ module.exports = async function handler(req, res) {
       successUrl: `${base}/?paiement=reussi&ref=${reference}`,
       failedUrl: `${base}/?paiement=echec`,
       notifyUrl: `${base}/api/webhooks/cinetpay`,
+      channel: "PUSH", // obligatoire pour CinetPay (valeur de l'exemple officiel avec redirection)
     };
     if (telephone) requete.clientPhoneNumber = telephone;
 
