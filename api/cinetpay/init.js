@@ -88,6 +88,14 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ paymentUrl: paiement.paymentUrl, reference });
   } catch (e) {
     console.error("cinetpay/init : échec initialize", e && e.message, e && e.apiStatus, e && e.description);
-    return res.status(502).json({ error: "Impossible de démarrer le paiement" });
+    const reponse = { error: "Impossible de démarrer le paiement" };
+    // Mode diagnostic : ajoutez CINETPAY_DEBUG=oui dans Vercel pour voir la vraie cause
+    // (jamais de clé ni de mot de passe dans ce message). À retirer une fois le problème réglé.
+    if (process.env.CINETPAY_DEBUG === "oui") {
+      reponse.detail = String((e && e.message) || e);
+      if (e && e.apiStatus) reponse.apiStatus = e.apiStatus;
+      if (e && e.description) reponse.description = e.description;
+    }
+    return res.status(502).json(reponse);
   }
 };
