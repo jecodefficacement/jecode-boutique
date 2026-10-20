@@ -3,7 +3,8 @@
 // puis démarre le paiement CinetPay et renvoie l'URL de la page de paiement.
 const { supabaseAdmin } = require("../_lib/supabaseAdmin");
 const { PRODUITS } = require("../_lib/produits");
-const { getClient, normaliserTelephone, separerNom, PAYS, DEVISE } = require("../_lib/cinetpayClient");
+const { getClient, paysDisponibles, normaliserTelephone, separerNom } = require("../_lib/cinetpayClient");
+const { PAYS_CINETPAY, prixPour } = require("../_lib/devises");
 const crypto = require("crypto");
 
 module.exports = async function handler(req, res) {
@@ -15,7 +16,8 @@ module.exports = async function handler(req, res) {
     return res.status(503).json({ error: "Paiement automatique indisponible" });
   }
 
-  const { produit_id, email_client, telephone_client, nom_client } = req.body || {};
+  const { produit_id, email_client, telephone_client, nom_client, pays: paysDemande } = req.body || {};
+  const PAYS = String(paysDemande || "GN").toUpperCase();
 
   const produit = PRODUITS[produit_id];
   if (!produit) return res.status(400).json({ error: "Produit inconnu" });
@@ -26,12 +28,25 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ error: "Email valide requis" });
   }
 
+  const config = PAYS_CINETPAY[PAYS];
+  if (!config) return res.status(400).json({ error: "Pays non pris en charge" });
+  try {
+    if (!paysDisponibles().includes(PAYS)) {
+      return res.status(400).json({ error: "Paiement automatique pas encore disponible dans ce pays" });
+    }
+  } catch (e) {
+    console.error("cinetpay/init : configuration", e && e.message);
+    return res.status(502).json({ error: "Impossible de démarrer le paiement" });
+  }
+  const DEVISE = config.devise;
+  const montant = prixPour(produit.prix, PAYS); // converti côté serveur, jamais depuis le navigateur
+
   const email = String(email_client).trim();
   const telephone = normaliserTelephone(telephone_client);
   const { prenom, nom } = separerNom(nom_client);
 
-  // 23 caractères, CinetPay en accepte 30 maximum
-  const reference = `JC-${Date.now()}-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
+  // ≤ 27 caractères (CinetPay: 30 max). Le code pays sert au webhook pour interroger le bon compte.
+  const reference = `JC-${PAYS}-${Date.now()}-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
 
   const { data: commande, error } = await supabaseAdmin.from("commandes").insert({
     reference,
@@ -39,7 +54,7 @@ module.exports = async function handler(req, res) {
     produit_nom: produit.nom,
     email_client: email,
     telephone_client: telephone_client ? String(telephone_client).trim() : null,
-    montant: produit.prix,
+    montant,
     devise: DEVISE,
     statut: "en_attente",
     moyen_paiement: "cinetpay",
@@ -56,7 +71,7 @@ module.exports = async function handler(req, res) {
     const requete = {
       currency: DEVISE,
       merchantTransactionId: reference,
-      amount: produit.prix,
+      amount: montant,
       lang: "fr",
       designation: produit.nom.slice(0, 100),
       clientEmail: email,

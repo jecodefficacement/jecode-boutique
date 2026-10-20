@@ -118,7 +118,7 @@ const GUIDES = [
     tag: "PREMIUM",
     tagColor: "#FB923C",
     tagBg: "#2D1000",
-    titre: "Apprends à faire ta demande avec un site web",
+    titre: "Fais ta demande avec un site web",
     sous_titre: "Mariage · Rencard · Anniversaire · Pardon",
     prix: 500000,
     couleur: C.rose,
@@ -250,6 +250,20 @@ function FaqItem({ question, reponse, index }) {
 // ─────────────────────────────────────────
 //  MODAL COMMANDE
 // ─────────────────────────────────────────
+const PAYS_PAIEMENT = {
+  GN: { nom: "Guinée", devise: "GNF", taux: 1, arrondi: 1 },
+  CI: { nom: "Côte d'Ivoire", devise: "XOF", taux: 0.065, arrondi: 5 },
+  SN: { nom: "Sénégal", devise: "XOF", taux: 0.065, arrondi: 5 },
+  ML: { nom: "Mali", devise: "XOF", taux: 0.065, arrondi: 5 },
+  BF: { nom: "Burkina Faso", devise: "XOF", taux: 0.065, arrondi: 5 },
+  BJ: { nom: "Bénin", devise: "XOF", taux: 0.065, arrondi: 5 },
+  TG: { nom: "Togo", devise: "XOF", taux: 0.065, arrondi: 5 },
+  CM: { nom: "Cameroun", devise: "XAF", taux: 0.065, arrondi: 5 },
+  CD: { nom: "RD Congo", devise: "CDF", taux: 0.27, arrondi: 50 },
+};
+// Même calcul que le serveur (api/_lib/devises.js) ; à garder identique. Le serveur fait foi.
+const prixPays = (prixGNF, code) => { const p = PAYS_PAIEMENT[code]; return Math.max(p.arrondi, Math.ceil((prixGNF * p.taux) / p.arrondi) * p.arrondi); };
+
 function OrderModal({ produit, onClose }) {
   const [step, setStep]   = useState(1);
   const [form, setForm]   = useState({ nom: "", telephone: "", email: "", niveau: "", detailsSite: "" });
@@ -257,6 +271,7 @@ function OrderModal({ produit, onClose }) {
   const [moyenPaiement, setMoyenPaiement] = useState(null); // "orange" | "cinetpay"
   const [chargementCinetpay, setChargementCinetpay] = useState(false);
   const [erreurCinetpay, setErreurCinetpay] = useState("");
+  const [paysCinetpay, setPaysCinetpay] = useState("GN");
   const isFormation = produit.type === "formation";
   const isService = produit.type === "service";
 
@@ -295,15 +310,20 @@ function OrderModal({ produit, onClose }) {
           email_client: form.email.trim(),
           telephone_client: form.telephone.trim(),
           nom_client: form.nom.trim(),
+          pays: paysCinetpay,
         }),
       });
       const data = await res.json();
       if (!res.ok || !data.paymentUrl) {
-        throw new Error(data.error || "Erreur inconnue");
+        const e = new Error(data.error || "Erreur inconnue");
+        e.fromServer = data.error;
+        throw e;
       }
       window.location.href = data.paymentUrl; // redirection vers la page de paiement CinetPay
     } catch (e) {
-      setErreurCinetpay("Impossible de démarrer le paiement pour le moment. Réessaie ou choisis Orange Money.");
+      setErreurCinetpay(e && e.fromServer === "Paiement automatique pas encore disponible dans ce pays"
+        ? "Le paiement automatique n'est pas encore disponible dans ce pays. Choisis Orange Money / WhatsApp."
+        : "Impossible de démarrer le paiement pour le moment. Réessaie ou choisis Orange Money.");
       setChargementCinetpay(false);
     }
   };
@@ -409,14 +429,14 @@ function OrderModal({ produit, onClose }) {
                   <div style={{ color: C.muted, fontSize: "0.76rem" }}>Paiement manuel + confirmation WhatsApp</div>
                 </div>
               </button>
-              <button onClick={() => setMoyenPaiement("cinetpay")}
+{!isService && (              <button onClick={() => setMoyenPaiement("cinetpay")}
                 style={{ display: "flex", alignItems: "center", gap: 12, textAlign: "left", background: "rgba(124,58,237,0.08)", border: "1.5px solid rgba(124,58,237,0.3)", borderRadius: 14, padding: "1rem", cursor: "pointer" }}>
                 <span style={{ fontSize: 26 }}>💳</span>
                 <div>
                   <div style={{ color: C.text, fontWeight: 700, fontSize: "0.9rem" }}>Carte bancaire, Wave & Mobile Money</div>
                   <div style={{ color: C.muted, fontSize: "0.76rem" }}>Paiement automatique et immédiat via CinetPay</div>
                 </div>
-              </button>
+              </button>)}
             </div>
             <button onClick={() => setStep(1)}
               style={{ width: "100%", background: "rgba(255,255,255,0.06)", color: C.text, border: `1px solid ${C.border}`, borderRadius: 12, padding: "0.85rem", fontWeight: 700, cursor: "pointer", fontSize: "0.88rem" }}>
@@ -471,8 +491,14 @@ function OrderModal({ produit, onClose }) {
               </div>
               <div style={{ color: C.muted, fontSize: "0.85rem", lineHeight: 1.6 }}>
                 Tu vas être redirigé(e) vers une page de paiement sécurisée où tu pourras choisir
-                carte bancaire, Wave, ou mobile money. Montant : <strong style={{ color: C.text }}>{produit.prix.toLocaleString()} GNF</strong> (≈ ${toUSD(produit.prix)} USD).
+                carte bancaire, Wave, ou mobile money. Montant : <strong style={{ color: C.text }}>{prixPays(produit.prix, paysCinetpay).toLocaleString()} {PAYS_PAIEMENT[paysCinetpay].devise}</strong> (≈ ${toUSD(produit.prix)} USD).
               </div>
+            </div>
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: "block", color: C.muted, fontSize: "0.78rem", fontWeight: 600, marginBottom: 5 }}>Ton pays</label>
+              <select value={paysCinetpay} onChange={e => setPaysCinetpay(e.target.value)} style={inputSx()}>
+                {Object.entries(PAYS_PAIEMENT).map(([code, p]) => <option key={code} value={code}>{p.nom} ({p.devise})</option>)}
+              </select>
             </div>
             {!form.email.trim() && (
               <div style={{ marginBottom: 14 }}>
@@ -534,14 +560,15 @@ function OrderModal({ produit, onClose }) {
 function ProductCard({ produit, onOrder, index = 0 }) {
   const [hovered, setHovered] = useState(false);
   return (
+    // L'animation d'apparition (AOS) est sur le conteneur extérieur : AOS pilote transform/opacity/transition,
+    // donc l'effet de survol (transform + transition) doit être sur un élément intérieur, sinon il écrase AOS.
+    <div data-aos="fade-up" data-aos-delay={Math.min(index, 4) * 90} style={{ display: "flex" }}>
     <div
-      data-aos="fade-up"
-      data-aos-delay={Math.min(index, 4) * 90}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
         background: C.bgCard, border: `1px solid ${hovered ? produit.couleur : C.border}`,
-        borderRadius: 20, overflow: "hidden", display: "flex", flexDirection: "column",
+        borderRadius: 20, overflow: "hidden", display: "flex", flexDirection: "column", width: "100%",
         transition: "border-color .2s, transform .2s",
         transform: hovered ? "translateY(-6px)" : "translateY(0)",
         boxShadow: hovered ? `0 20px 40px rgba(0,0,0,0.4)` : "none",
@@ -606,6 +633,7 @@ function ProductCard({ produit, onOrder, index = 0 }) {
           </button>
         </div>
       </div>
+    </div>
     </div>
   );
 }
@@ -907,7 +935,8 @@ export default function App() {
             Un site pour un moment unique
           </h3>
           <p style={{ color: C.muted, fontSize: "0.88rem", marginBottom: 20, lineHeight: 1.65 }}>
-           Surprenez vos proches : Anniversaire, demande de sortie, carte d'invitation... — on te crée une page personnalisée, animée, à envoyer par simple lien.
+            Anniversaire, demande, surprise... comme le site d'anniversaire de Kadiatou ou l'invitation à sortir —
+            on te crée une page personnalisée, animée, à envoyer par simple lien.
           </p>
           <div style={{ display: "flex", alignItems: "baseline", gap: 10, justifyContent: "center", marginBottom: 20 }}>
             <span style={{ color: "#38BDF8", fontWeight: 900, fontSize: "1.8rem", fontFamily: "'Space Grotesk', sans-serif" }}>50 000</span>

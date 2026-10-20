@@ -5,7 +5,7 @@
 const { supabaseAdmin } = require("../_lib/supabaseAdmin");
 const { PRODUITS } = require("../_lib/produits");
 const { traiterCommandeConfirmee } = require("../_lib/traiterCommande");
-const { getClient, PAYS } = require("../_lib/cinetpayClient");
+const { getClient } = require("../_lib/cinetpayClient");
 const { parseNotification, verifyNotification } = require("cinetpay-js");
 
 async function trouverCommande(notification) {
@@ -53,7 +53,8 @@ module.exports = async function handler(req, res) {
   // 4. Déjà traitée : on répond OK sans rien refaire (protège contre le rejeu)
   if (commande.statut === "paye") return res.status(200).send("Déjà traitée");
 
-  // 5. Confirmer le statut directement auprès de CinetPay
+  // 5. Confirmer le statut directement auprès de CinetPay (compte du pays lu dans la référence JC-<PAYS>-...)
+  const PAYS = (String(commande.reference).match(/^JC-([A-Z]{2})-/) || [])[1] || "GN";
   let statut;
   try {
     statut = await getClient().payment.getStatus(notification.transactionId, PAYS);
